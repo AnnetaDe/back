@@ -1,8 +1,6 @@
-import { hash } from 'argon2';
+import * as argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import 'dotenv/config';
-
 const prisma = new PrismaClient();
 const countries = [
   'Afghanistan',
@@ -29,7 +27,7 @@ async function main() {
     const email = faker.internet.email();
     const name = faker.person.firstName();
     const avatarUrl = faker.image.avatar();
-    // const password = await hash('123456');
+    const password = await argon2.hash('123456');
     const country = faker.helpers.arrayElement(countries);
     const createdAt = faker.date.past({ years: 1 });
     const updatedAt = new Date(
@@ -42,7 +40,7 @@ async function main() {
         email,
         name,
         avatarUrl,
-
+        password,
         country,
         createdAt,
         updatedAt,
@@ -53,6 +51,7 @@ async function main() {
 
 main()
   .catch(e => {
+    console.error(e);
     throw e;
   })
   .finally(async () => {
