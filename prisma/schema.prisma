@@ -11,7 +11,7 @@ datasource db {
 
 model User {
   id Int @id @default(autoincrement())
-  password String?
+  password String
   
   
   email String @unique
@@ -30,8 +30,8 @@ model Settings{
   key String @unique
   value String
   
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 

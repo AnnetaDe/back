@@ -3,6 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaService } from 'src/prisma.service';
 import { UserService } from 'src/user/user.service';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   controllers: [AuthController],
