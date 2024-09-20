@@ -2,9 +2,9 @@ import { Role } from '@prisma/client';
 import {
   IsEmail,
   MinLength,
-  isEnum,
   IsOptional,
   IsString,
+  IsEnum,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -27,8 +27,9 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
+  @IsEnum(Role)
   @IsOptional()
-  role: Role;
+  role?: Role;
 }
 
 export type UpdateUserDto = Partial<CreateUserDto>;
