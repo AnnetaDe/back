@@ -12,10 +12,10 @@ import { MediaModule } from './media/media.module';
     ConfigModule.forRoot(),
     AuthModule,
     UserModule,
-    StatisticsModule,
+    MediaModule,
     MailModule,
     SettingsModule,
-    MediaModule,
+    StatisticsModule,
   ],
 })
 export class AppModule {}

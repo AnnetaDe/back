@@ -25,9 +25,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!user) {
-      throw new Error('User not found by email');
-    }
+
     return user;
   }
 
@@ -36,6 +34,7 @@ export class UserService {
       ...dto,
       password: await hash(password),
     };
+    console.log(user);
     return this.prisma.user.create({
       data: user,
     });

@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-
 import { UserService } from 'src/user/user.service';
 import { verify } from 'argon2';
 import { Response } from 'express';
@@ -20,6 +19,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private userService: UserService
+    // private emailService: MailService
   ) {}
 
   async login(dto: AuthDto) {
@@ -39,7 +39,6 @@ export class AuthService {
     const tokens = await this.issueTokens(user.id, user.role);
 
     // await this.emailService.sendWelcome(user.email);
-
     return {
       user,
       ...tokens,

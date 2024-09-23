@@ -30,6 +30,7 @@ export class AuthController {
   async login(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response) {
     const { refreshToken, ...response } = await this.authService.login(dto);
     this.authService.addRefreshTokenToResponse(res, refreshToken);
+    console.log('logined', refreshToken);
     return response;
   }
 
@@ -42,6 +43,7 @@ export class AuthController {
   ) {
     const { refreshToken, ...response } = await this.authService.register(dto);
     this.authService.addRefreshTokenToResponse(res, refreshToken);
+    console.log('registered');
     return response;
   }
 
@@ -61,6 +63,7 @@ export class AuthController {
       refreshTokenFromCookies
     );
     this.authService.addRefreshTokenToResponse(res, refreshToken);
+    console.log(' and refreshed');
     return response;
   }
 
@@ -68,6 +71,7 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response) {
     this.authService.removeRefreshTokenFromResponse(res);
+    console.log('logged out');
     return true;
   }
 
