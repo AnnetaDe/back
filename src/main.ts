@@ -7,7 +7,6 @@ async function bootstrap() {
 
   const server = app.getHttpServer();
   const router = server._events.request;
-  // console.log(router);
 
   app.setGlobalPrefix('api');
   app.use(cookieParser());
