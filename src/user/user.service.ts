@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { UpdateUserDto, CreateUserDto } from './dto/create-user.dto';
 import { hash } from 'argon2';
@@ -16,7 +16,7 @@ export class UserService {
       where: { id },
     });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     return user;
   }
@@ -34,7 +34,6 @@ export class UserService {
       ...dto,
       password: await hash(password),
     };
-    console.log(user);
     return this.prisma.user.create({
       data: user,
     });
@@ -70,13 +69,15 @@ export class UserService {
   }
 
   async findAll(args?: PaginationArgsWithSearchTerm): Promise<UserResponse> {
+    const skip = args?.skip ? +args.skip : 0;
+    const take = args?.take ? +args.take : 10;
     const searchTermQuery = args?.searchTerm
       ? this.getSearchTermFilter(args?.searchTerm)
       : {};
 
     const users = await this.prisma.user.findMany({
-      skip: +args?.skip,
-      take: +args?.take,
+      skip,
+      take,
       where: searchTermQuery,
     });
 
@@ -84,7 +85,7 @@ export class UserService {
       where: searchTermQuery,
     });
 
-    const isHasMore = morePages(totalCount, +args?.skip, +args.take);
+    const isHasMore = morePages(totalCount, skip, take);
 
     return { items: users, isHasMore };
   }
