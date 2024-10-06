@@ -7,13 +7,23 @@ async function bootstrap() {
 
   const server = app.getHttpServer();
   const router = server._events.request;
-
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://web-admin-panel-front-40axeoamg-anns-projects-a3b0e489.vercel.app',
+  ];
   app.setGlobalPrefix('api');
   app.use(cookieParser());
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+
     credentials: true,
-    exposedHeaders: 'set-cookie',
+    exposedHeaders: ['set-cookie'],
   });
   await app.listen(4200, () => console.log(`Server is running`));
 }
