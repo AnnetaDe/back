@@ -15,8 +15,6 @@ async function bootstrap() {
     credentials: true,
     exposedHeaders: 'set-cookie',
   });
-  await app.listen(4200, () =>
-    console.log(`Server is running on http://localhost:4200`)
-  );
+  await app.listen(4200, () => console.log(`Server is running`));
 }
 bootstrap();
