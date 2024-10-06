@@ -9,7 +9,7 @@ async function bootstrap() {
   const router = server._events.request;
   const allowedOrigins = [
     'http://localhost:3000',
-    'https://web-admin-panel-front-40axeoamg-anns-projects-a3b0e489.vercel.app',
+    'https://web-admin-panel-front.vercel.app',
   ];
   app.setGlobalPrefix('api');
   app.use(cookieParser());
