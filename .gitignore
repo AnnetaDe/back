@@ -1,2 +1,10 @@
+# Ignore .env files
 .env
-.venv
+.env*
+
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore IDE configuration files (e.g., VSCode, PyCharm)
+.vscode/
+.idea/
