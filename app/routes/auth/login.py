@@ -45,13 +45,14 @@ class CurrentUser(BaseModel):
     name: str
     role: str
     verified: bool
+    performance: int
+    avatar: str
 
 
 @login_router.post("/login", response_model=UserLoginResponse)
 async def api_login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response
 ):
-    """Login a user."""
 
     user = User.verify_user_email_password(
         email=form_data.username, password=form_data.password, db=databaseU
@@ -162,5 +163,7 @@ async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)
         "email": current_user.email,
         "name": current_user.name,
         "role": current_user.role,
+        "performance": current_user.performance,
+        "avatar": current_user.avatar,
         "verified": current_user.verified,
     }

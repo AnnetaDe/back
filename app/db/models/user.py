@@ -21,6 +21,7 @@ class User(BaseModel):
     password: str = Field(alias="password")
     verified: bool = Field(alias="verified", default=False)
     refresh_token: Optional[str] = Field(alias="refresh_token")
+    avatar: Optional[str] = Field(alias="avatar")
     date_created: datetime.datetime = Field(
         default_factory=datetime.datetime.now, alias="date_created"
     )
@@ -47,6 +48,7 @@ class User(BaseModel):
         verified: bool = False,
         refresh_token: Optional[str] = None,
         performance: Optional[str] = None,
+        avatar: Optional[str] = None,
     ) -> "User":
         """Create a new user instance."""
         return cls(
@@ -58,6 +60,7 @@ class User(BaseModel):
             verified=verified,
             refresh_token=refresh_token,
             performance=performance,
+            avatar=avatar,
         )
 
     def save_to_db(self, db: Database, collection_name: str = "users"):
