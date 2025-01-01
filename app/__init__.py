@@ -1,4 +1,3 @@
-import logging
 from fastapi import Depends, FastAPI, HTTPException
 
 from app.db.database import start_database
@@ -48,5 +47,9 @@ def read_users():
             "data": users,
         }
     except Exception as e:
-        logging.error(f"Database connection failed: {e}")
-        raise HTTPException(status_code=500, detail="Database connection failed")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Database connection failed",
+            headers={"X-Error": str(e)},
+        )

@@ -1,11 +1,9 @@
 import os
 import uvicorn
 from app import app
-from app.helpers.setup_logger import setup_logging
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
-    setup_logging()
-    uvicorn.run("app:app", port=port, reload=debug)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=debug)

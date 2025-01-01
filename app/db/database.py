@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import logging
+
 import os
 from pymongo.errors import PyMongoError
 
@@ -32,14 +32,11 @@ def start_database():
 
         # Verify the connection
         client.admin.command("ping")
-        logging.info("MongoDB connected successfully!")
 
         # Return the database instance
         return client["studapp"]
 
     except PyMongoError as e:
-        logging.error(f"MongoDB connection error: {e}")
-        raise
+        raise ConnectionError("Failed to connect to the MongoDB database.") from e
     except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        raise
+        raise e

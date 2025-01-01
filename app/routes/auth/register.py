@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, field_validator
-import logging
+import ing
 from app.db.database import start_database
 from app.db.models.user import User
 
 
 register_router = APIRouter()
 database = start_database()
-logging.basicConfig(level=logging.INFO)
+ing.basicConfig(level=ing.INFO)
 
 
 class UserCreateRequest(BaseModel):
@@ -33,7 +33,7 @@ class UserCreateRequest(BaseModel):
 async def api_create_user(data: UserCreateRequest):
     """Register a new user."""
     if User.email_exists(email=data.email, db=database):
-        logging.warning(f"Attempt to register with existing email: {data.email}")
+        ing.warning(f"Attempt to register with existing email: {data.email}")
         raise HTTPException(status_code=400, detail="Email already exists")
 
     # Create a new user
@@ -47,9 +47,9 @@ async def api_create_user(data: UserCreateRequest):
     # Save the user to the database
     try:
         new_user.save_to_db(db=database)
-        logging.info(f"User {data.email} created successfully")
+        ing.info(f"User {data.email} created successfully")
     except Exception as e:
-        logging.error(f"Error creating user: {e}")
+        ing.error(f"Error creating user: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
     # Return success response (exclude sensitive fields like password)
