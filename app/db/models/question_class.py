@@ -31,9 +31,7 @@ class Question(BaseModel):
         """
 
         existing_question = db[collection_name].find_one({"hash": self.hash})
-        print(existing_question)
         if existing_question:
-            print("Duplicate question found by Question. Skipping save.")
             return False
 
         db[collection_name].insert_one(self.model_dump(by_alias=True))

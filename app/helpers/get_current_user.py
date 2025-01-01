@@ -29,7 +29,6 @@ def get_current_user(encrypted_token: str = Depends(oauth2_scheme)):
         if not current_user:
 
             raise HTTPException(status_code=401, detail="User not found")
-        print(f"Current user: {current_user}")
         if current_user.id is None:
             raise HTTPException(status_code=401, detail="User ID is None")
 

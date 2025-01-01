@@ -115,7 +115,6 @@ async def submit_answers(
     Submit answers for a test and evaluate correctness.
     """
     db = start_database()
-    print(current_user)
     user_id = current_user.id
     performance_board_id = current_user.performance
     test_id = test_data.test_id

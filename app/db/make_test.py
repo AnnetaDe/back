@@ -86,7 +86,7 @@ def generate_test(subject, number_of_questions, level):
                     print("Generated and saved a new question.")
                     remaining_questions -= 1
                 else:
-                    print("Duplicate from test. Skipping save.")
+                    print("Question already exists, skipping.")
         except Exception as e:
             print(f"Error generating or saving question: {e}")
             break
