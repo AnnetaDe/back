@@ -30,4 +30,9 @@ def create_token(data: dict, expire_time: Optional[int] = 30):
 def decode_token(token: str):
     if SECRET_KEY is None:
         raise ValueError("SECRET_KEY environment variable is not set")
-    return jwt.decode(token, SECRET_KEY, algorithms=[str(ALGORITHM)])
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[str(ALGORITHM)])
+
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise jwt.ExpiredSignatureError("Token has expired")

@@ -1,14 +1,12 @@
 import logging
-from fastapi import FastAPI, HTTPException
-from bson import ObjectId
+from fastapi import Depends, FastAPI, HTTPException
 
-from app.db.models import user
 from app.db.database import start_database
 import os
-from fastapi.middleware.cors import CORSMiddleware as CORS
 from dotenv import load_dotenv
-from app.routes.api.auth.register import register_router
-from app.routes.api.auth.login import login_router
+from app.routes.auth.register import register_router
+from app.routes.auth.login import get_current_user, login_router
+from app.routes.auth.tests import test_router
 
 
 load_dotenv()
@@ -30,6 +28,9 @@ def read_root():
 
 app.include_router(register_router, prefix="", tags=["Register"])
 app.include_router(login_router, prefix="", tags=["Login"])
+app.include_router(
+    test_router, prefix="", tags=["Test"], dependencies=[Depends(get_current_user)]
+)
 
 
 @app.get("/users")
