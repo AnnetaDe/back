@@ -1,5 +1,4 @@
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import start_database
 import os
@@ -16,15 +15,6 @@ app = FastAPI()
 debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "t")
 if debug:
     print("Debug mode is enabled")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Authorization"],
-)
 
 
 @app.get("/")
