@@ -33,20 +33,14 @@ app.include_router(
 def read_users():
     try:
         db = start_database()
-        # Check database connection with a ping
-        db.client.admin.command("ping")
-        users_collection = db["users"]
 
-        users = list(users_collection.find({}, {"_id": 0}))
         return {
             "status": "success",
             "message": "Database connection is active",
-            "data": users,
         }
     except Exception as e:
 
         raise HTTPException(
             status_code=500,
             detail="Database connection failed",
-            headers={"X-Error": str(e)},
         )
