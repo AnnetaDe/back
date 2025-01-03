@@ -3,10 +3,8 @@ from pyexpat import model
 from faker import Faker
 from pydantic import BaseModel, Field
 from typing import Dict, Optional
-from typing import Dict
 from pymongo.database import Database
 
-from app.db.database import start_database
 
 fake = Faker()
 
@@ -45,7 +43,6 @@ class TestPerformance(BaseModel):
 
 class Performance(BaseModel):
     id: Optional[str] = Field(alias="_id")
-
     user_id: str
     tests: list[TestPerformance]
     total_score: int
@@ -55,9 +52,9 @@ class Performance(BaseModel):
     total_by_level: Dict[int, int]
 
     @classmethod
-    def create_performance(cls, user_id: str):
-        new_perf = cls(
-            _id=str(fake.uuid4()),
+    def create_performance(cls, user_id: str, performance_id: str):
+        return cls(
+            _id=performance_id,
             user_id=user_id,
             tests=[],
             total_score=0,
@@ -66,36 +63,13 @@ class Performance(BaseModel):
             total_by_subj={},
             total_by_level={},
         )
-        return new_perf
-
-    def save_to_db(self, db: Database, collection_name: str = "performance_board"):
-        db[collection_name].insert_one(self.model_dump(by_alias=True))
-
-    @staticmethod
-    def update_tests(
-        performance_id: str,
-        test: TestPerformance,
-        db: Database,
-        collection_name: str = "performance_board",
-    ):
-        db[collection_name].update_one(
-            {"_id": performance_id},
-            {
-                "$push": {"tests": test.model_dump()},
-                "$inc": {
-                    "total_tests": 1,
-                    "total_score": test.test_score,
-                    "total_questions": test.num_test_questions,
-                    f"total_by_subj.{test.test_subject}": 1,
-                    f"total_by_level.{test.test_level}": 1,
-                },
-            },
-        )
 
     class Config:
-        populate_by_name = True
+
+        populate_by_alias = True
         json_schema_extra = {
             "example": {
+                "_id": "123",
                 "user_id": "123",
                 "tests": [
                     {

@@ -1,27 +1,44 @@
 from typing import Annotated
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 import jwt
+from jwt import PyJWTError
 
-from app.db import database
 from app.db.models.user import User
 from app.helpers.tokens import create_token, decode_token
-from app.helpers.get_current_user import get_current_user
 
-
-login_router = APIRouter()
-databaseU = database.start_database()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-class Token_data(BaseModel):
-    access_token: str
-    token_type: str
-    user_id: str
-    username: str
+async def get_database(request: Request):
+    return request.app.state.db
+
+
+async def get_current_user(
+    encrypted_token=Depends(oauth2_scheme), db=Depends(get_database)
+):
+
+    try:
+        payload = decode_token(encrypted_token)
+        current_user_id = payload.get("sub")
+        if not current_user_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        current_user = await get_user_by_id(current_user_id, db)
+        current_user = User(**current_user)
+        print(current_user)
+
+        return current_user
+    except PyJWTError as e:
+        raise HTTPException(
+            status_code=401, detail="Something went wrong with the token"
+        )
 
 
 class UserLoginRequest(BaseModel):
@@ -49,28 +66,88 @@ class CurrentUser(BaseModel):
     avatar: str
 
 
-@login_router.post("/login", response_model=UserLoginResponse)
-async def api_login_user(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response
-):
+class UserRegister(BaseModel):
+    username: EmailStr
+    password: str
+    name: str
 
-    user = User.verify_user_email_password(
-        email=form_data.username, password=form_data.password, db=databaseU
+
+async def insert_user_to_db(user, db, collection):
+
+    return await db[collection].insert_one(user.model_dump(by_alias=True))
+
+
+async def check_user_exists(email: str, db):
+    user = await db["users"].find_one({"email": email})
+    return user
+
+
+async def verify_user(email: str, password: str, db):
+    user = await db["users"].find_one({"email": email})
+    if not user:
+        return False
+    if not pwd_context.verify(password, user["password"]):
+        return False
+    return user
+
+
+async def get_user_by_id(user_id: str, db):
+    user = await db["users"].find_one({"_id": user_id})
+    return user
+
+
+async def update_refresh_token(user_id: str, refresh_token: str, db):
+    await db["users"].update_one(
+        {"_id": user_id}, {"$set": {"refresh_token": refresh_token}}
+    )
+    return "Refresh token updated successfully"
+
+
+login_router = APIRouter()
+
+
+@login_router.post("/register")
+async def create_user(data: UserRegister, db=Depends(get_database)):
+
+    try:
+        user = await check_user_exists(data.username, db)
+        if user:
+            return HTTPException(
+                status_code=400,
+                detail="You already have an account. Please login",
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="DB error")
+
+    new_user = User.create_user(
+        name=data.name,
+        email=data.username,
+        password=data.password,
+        role="student",
+        verified=False,
     )
 
-    if not user or user.id is None:
-        return HTTPException(
-            status_code=401,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    await insert_user_to_db(new_user, db, "users")
+
+    return "User created successfully"
+
+
+@login_router.post("/login")
+async def login_user(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response,
+    db=Depends(get_database),
+):
+    user = await verify_user(form_data.username, form_data.password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     acc_token = create_token(
-        data={"sub": user.id, "email": user.email},
+        data={"sub": user["_id"], "email": user["email"]},
         expire_time=30,
     )
     refresh_token = create_token(
-        data={"sub": user.id, "email": user.email, "refresh": True},
+        data={"sub": user["_id"], "email": user["email"], "refresh": True},
         expire_time=1200,
     )
 
@@ -89,14 +166,13 @@ async def api_login_user(
         secure=True,
         samesite="lax",
     )
-    return {
-        "access_token": acc_token,
-        "refresh_token": refresh_token,
-    }
+    return {"access_token": acc_token, "refresh_token": refresh_token}
 
 
-@login_router.post("/refresh", response_model=UserLoginResponse)
-async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
+@login_router.post("/refresh")
+async def refresh_token(
+    response: Response, refresh_token: str = Cookie(None), db=Depends(get_database)
+):
 
     if not refresh_token:
         raise HTTPException(
@@ -107,23 +183,17 @@ async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
         if not payload:
             raise HTTPException(status_code=401, detail="Invalid token")
         user_id = payload["sub"]
-        user = User.get_user_by_id(user_id=user_id, db=databaseU)
-        if not user:
-            raise HTTPException(
-                status_code=401, detail="Broken token, user id not found"
-            )
+        new_refresh_token = create_token(
+            data={"sub": payload["sub"], "email": payload["email"], "refresh": True},
+            expire_time=1200,
+        )
+        await update_refresh_token(user_id, new_refresh_token, db)
 
         # Generate a new access token
         new_acc_token = create_token(
             data={"sub": payload["sub"], "email": payload["email"]}, expire_time=30
         )
-        new_refresh_token = create_token(
-            data={"sub": payload["sub"], "email": payload["email"], "refresh": True},
-            expire_time=1200,
-        )
-        user.update_refresh_token(
-            user_id=user_id, refresh_token=new_refresh_token, db=databaseU
-        )
+
         response.set_cookie(
             key="access_token",
             value=new_acc_token,
@@ -138,11 +208,7 @@ async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
             secure=True,
             samesite="lax",
         )
-
-        return {
-            "access_token": new_acc_token,
-            "refresh_token": new_refresh_token,
-        }
+        return "Token refreshed successfully"
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.PyJWTError:
@@ -158,12 +224,4 @@ async def logout(response: Response):
 
 @login_router.get("/profile")
 async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)):
-    return {
-        "user_id": current_user.id,
-        "email": current_user.email,
-        "name": current_user.name,
-        "role": current_user.role,
-        "performance": current_user.performance,
-        "avatar": current_user.avatar,
-        "verified": current_user.verified,
-    }
+    return current_user

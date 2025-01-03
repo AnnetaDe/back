@@ -22,7 +22,11 @@ class GPTHandler:
         self.max_tokens = max_tokens
         self.temperature = temperature
 
-    def generate_question(self, subject: str, level: int) -> str:
+    async def generate_question(
+        self,
+        subject: str,
+        level: int,
+    ) -> str:
         """
         Generate a response from GPT for the given prompt.
 
@@ -36,12 +40,23 @@ class GPTHandler:
 
         level = level
         prompt = (
-            f"Generate a unique JSON object for a multiple-choice question on '{subject}' "
-            f"with difficulty {level} (1 = easy, 4 = very hard)."
-            "JSON includes:\n"
-            '{"question":"text","choices":{"1":"1","2":"2","3":"3","4":"4"},'
-            '"subject":"subject","answer":"Correct option (1, 2, 3, or 4)","level":1}. '
-            "Ensure the JSON is valid, complete,no errors, check for JSONDecodeError."
+            f"Generate multiple-choice question on the subject '{subject}' "
+            f"with difficulty level {level} (1 = easy, 4 = very hard). "
+            "The output must be a valid JSON object and adhere to the following schema:\n"
+            "{\n"
+            '  "question": "A well-framed question related to the subject",\n'
+            '  "choices": {\n'
+            '    "1": "Option 1",\n'
+            '    "2": "Option 2",\n'
+            '    "3": "Option 3",\n'
+            '    "4": "Option 4"\n'
+            "  },\n"
+            '  "subject": "The same subject provided",\n'
+            '  "answer": "Correct option (must be 1, 2, 3, or 4)",\n'
+            '  "level": "The difficulty level provided as input (1-4)"\n'
+            "}\n"
+            "Ensure the JSON is valid and free of errors. "
+            "Avoid repeated questions and verify the correctness of the answer."
         )
 
         try:

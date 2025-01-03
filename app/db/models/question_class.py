@@ -1,68 +1,42 @@
 import hashlib
+from uuid import uuid4
 from faker import Faker
 from pydantic import BaseModel, Field, EmailStr, field_validator, validator
-from typing import Optional, Dict
+from typing import Literal, Optional, Dict
 from pymongo.database import Database
 
-fake = Faker()
+from app.helpers.uniq_id import unique_id
 
 
 class Question(BaseModel):
-    id: Optional[str] = Field(alias="_id")
-    question: str = Field(alias="question")
-    choices: dict[str, str] = Field(alias="choices")
-    subject: str = Field(alias="subject")
-    answer: str = Field(alias="answer")
-    level: Optional[str] = Field(alias="level")
-    hash: Optional[str] = Field(alias="hash")
-
-    @staticmethod
-    def generate_hash(question_text: str) -> str:
-        """
-        Generate a SHA-256 hash for the question text.
-        """
-        return hashlib.sha256(question_text.encode("utf-8")).hexdigest()
-
-    def check_uniq_save_to_db(
-        self, db: Database, collection_name: str = "questions"
-    ) -> bool:
-        """
-        Save the question to the database after ensuring uniqueness.
-        """
-
-        existing_question = db[collection_name].find_one({"hash": self.hash})
-        if existing_question:
-            return False
-
-        db[collection_name].insert_one(self.model_dump(by_alias=True))
-        print("Question saved successfully.")
-        return True
+    id: str = Field(default_factory=lambda: unique_id("qu"), alias="_id")
+    question: str
+    choices: Dict[Literal["1", "2", "3", "4"], str]
+    subject: str
+    answer: Literal["1", "2", "3", "4"]
+    level: int
+    hash: Optional[str] = Field(alias="hash", default=None)
+    is_hidden: bool = Field(default=True, exclude=True)
 
     @classmethod
-    def create_question(
-        cls,
-        question: str,
-        choices: Dict[str, str],
-        subject: str,
-        level: int,
-        answer: str,
-        hash: Optional[str] = None,
-    ) -> "Question":
+    def create_question(cls, dict_data, hashed) -> "Question":
         """
-        Create a new question instance.
+        Parse the JSON response from GPT into a Question instance.
+
+        :param json_data: The JSON response from GPT.
+        :return: A Question instance.
 
         """
-        question_hash = cls.generate_hash(question)
-
+        cls.model_validate(dict_data)
         return cls(
-            _id=str(fake.uuid4()),
-            question=question,
-            choices=choices,
-            subject=subject.capitalize(),
-            level=str(level),
-            answer=answer,
-            hash=hash,
+            question=dict_data["question"],
+            choices=dict_data["choices"],
+            subject=dict_data["subject"],
+            answer=dict_data["answer"],
+            level=dict_data["level"],
+            hash=hashed,
         )
 
-    class Config:
-        populate_by_name = True
+    def populate_by_field(self, name: str):
+        self.name = name
+        return self

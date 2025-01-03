@@ -1,9 +1,8 @@
-from fastapi import Depends, FastAPI, HTTPException
+from contextlib import asynccontextmanager
+from fastapi import Depends, FastAPI
 
-from app.db.database import start_database
-import os
+from app.db.database import close_database, start_database
 from dotenv import load_dotenv
-from app.routes.auth.register import register_router
 from app.routes.auth.login import get_current_user, login_router
 from app.routes.auth.tests import test_router
 
@@ -12,35 +11,33 @@ load_dotenv()
 
 
 app = FastAPI()
-debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "t")
-if debug:
-    print("Debug mode is enabled")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    client = None
+    try:
+        client = await start_database()
+        app.state.db = client["studapp"]
+        print(" MongoDB is connected")
+        yield
+    finally:
+        if client is not None:
+            await close_database(client)
+            print("Closed MongoDB connection")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def start():
+
+    return {"message": "Hello StudApp"}
 
 
-app.include_router(register_router, prefix="", tags=["Register"])
-app.include_router(login_router, prefix="", tags=["Login"])
+app.include_router(login_router, prefix="/auth", tags=["Auth"])
 app.include_router(
     test_router, prefix="", tags=["Test"], dependencies=[Depends(get_current_user)]
 )
-
-
-@app.get("/users")
-def read_users():
-    try:
-        db = start_database()
-
-        return {
-            "status": "success",
-            "message": "Database connection is active",
-        }
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail="Database connection failed",
-        )

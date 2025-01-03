@@ -1,17 +1,20 @@
 from datetime import datetime
 from faker import Faker
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
 
-from app.db.database import start_database
+
 from app.db.make_test import generate_test
-from app.helpers.get_current_user import get_current_user
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
+from app.routes.auth.login import get_current_user
 
 test_router = APIRouter()
-database = start_database()
+
+
+async def get_database(request: Request):
+    return request.app.state.db
 
 
 class TestRequest(BaseModel):
@@ -51,7 +54,8 @@ class CurrentUser(BaseModel):
     name: str
     role: str
     verified: bool
-    performance: int
+    performance: str
+    history: str
 
 
 fake = Faker()
@@ -59,18 +63,22 @@ fake = Faker()
 
 @test_router.post("/test", response_model=TestResponse)
 async def generate(
-    data: TestRequest, current_user: CurrentUser = Depends(get_current_user)
+    data: TestRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db=Depends(get_database),
 ):
     """Generate a test."""
 
     user_id = current_user.id
     _id = str(fake.uuid4())
 
-    questions = generate_test(
+    questions = await generate_test(
         subject=data.subject,
         number_of_questions=data.number_of_questions,
         level=data.level,
+        db=db,
     )
+
     if not questions:
         raise HTTPException(status_code=400, detail="Error generating test")
     hidden_answers = [
@@ -81,8 +89,8 @@ async def generate(
         }
         for q in questions
     ]
-    bd = start_database()
-    bd["history"].insert_one(
+
+    await db["history"].insert_one(
         {
             "_id": _id,
             "user_id": user_id,
@@ -98,6 +106,7 @@ async def generate(
         "test_id": _id,
         "status": "success",
         "message": "Test created",
+        "question_count": len(hidden_answers),
         "subject": data.subject,
         "level": data.level,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -110,25 +119,32 @@ async def generate(
 async def submit_answers(
     test_data: TestSubmission,
     current_user: CurrentUser = Depends(get_current_user),
+    db=Depends(get_database),
 ):
     """
     Submit answers for a test and evaluate correctness.
     """
-    db = start_database()
+
     user_id = current_user.id
     performance_board_id = current_user.performance
-    test_id = test_data.test_id
+    history_id = current_user.history
+    performance_board = await db["performance_board"].find_one(
+        {"id": performance_board_id}
+    )
+    print(performance_board)
+    # if performance_board is None:
+    #     performance_board = Performance.create_performance(
+    #         performance_id=performance_board_id, user_id=user_id
+    #     )
+    #     print(performance_board.model_dump())
 
-    if not performance_board_id:
-        user_performance = Performance.create_performance(user_id)
-        user_performance.save_to_db(db, collection_name="performance_board")
-        db["users"].update_one(
-            {"_id": user_id}, {"$set": {"performance": user_performance.id}}
-        )
+    #     await db["performance_board"].insert_one(performance_board.model_dump())
+
+    test_id = test_data.test_id
     selected_answers = test_data.selected_answers
     if not selected_answers:
         raise HTTPException(status_code=400, detail="No answers submitted")
-    test_to_evaluate = db["history"].find_one({"_id": test_id})
+    test_to_evaluate = await db["history"].find_one({"_id": test_id})
     if test_to_evaluate is None:
         raise HTTPException(status_code=404, detail="Test not found")
     current_subject = test_to_evaluate["subject"]
@@ -167,15 +183,23 @@ async def submit_answers(
         completed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
-    Performance.update_tests(
-        performance_id=str(performance_board_id),
-        test=current_test_summary,
-        db=db,
-        collection_name="performance_board",
-    )
-    db["history"].update_one(
+    await db["history"].update_one(
         {"_id": test_id},
         {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
+    )
+
+    await db["performance_board"].update_one(
+        {"id": performance_board_id},
+        {
+            "$push": {"tests": current_test_summary.model_dump()},
+            "$inc": {
+                "total_tests": 1,
+                "total_score": int(is_correct / total_num_questions * 100),
+                "total_questions": total_num_questions,
+                f"total_by_subj.{current_subject}": 1,
+                f"total_by_level.{current_level}": 1,
+            },
+        },
     )
 
     return {
@@ -184,19 +208,22 @@ async def submit_answers(
             "correct": is_correct,
             "incorrect": total_num_questions - is_correct,
             "score_%": is_correct / total_num_questions * 100,
+            "completed": True,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         },
         "message": "amazing",
     }
 
 
-@test_router.get("/completed", response_model=CompletedResponse)
-async def get_user_history(current_user: CurrentUser = Depends(get_current_user)):
+@test_router.get("/my-tests", response_model=CompletedResponse)
+async def get_user_history(
+    current_user: CurrentUser = Depends(get_current_user), db=Depends(get_database)
+):
     """
     Retrieve the test generation history for the authenticated user.
     """
     user_id = current_user.id
-    db = start_database()
 
-    history = list(db["history"].find({"user_id": user_id}))
+    history = await db["history"].find({"user_id": user_id}).to_list(length=100)
 
     return {"history": history}
