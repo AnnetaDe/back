@@ -15,7 +15,7 @@ class User(BaseModel):
         alias="_id", default_factory=lambda: unique_id(prefix="user")
     )
     performance: Optional[str] = Field(
-        alias="performance", default_factory=lambda: unique_id(prefix="")
+        alias="performance", default_factory=lambda: unique_id(prefix="perf")
     )
     history: Optional[str] = Field(
         alias="history", default_factory=lambda: unique_id(prefix="hist")
