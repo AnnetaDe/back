@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 import jwt
 from jwt import PyJWTError
 
+from app.db.models.performance import Performance
 from app.db.models.user import User
 from app.helpers.tokens import create_token, decode_token
 
@@ -126,7 +127,11 @@ async def create_user(data: UserRegister, db=Depends(get_database)):
         role="student",
         verified=False,
     )
-
+    user_performance = Performance.create_performance(
+        user_id=new_user.id if new_user.id else "",
+        performance_id=new_user.performance if new_user.performance else "",
+    )
+    await db["performance_board"].insert_one(user_performance.model_dump())
     await insert_user_to_db(new_user, db, "users")
 
     return "User created successfully"
@@ -166,7 +171,8 @@ async def login_user(
         secure=True,
         samesite="lax",
     )
-    return {"access_token": acc_token, "refresh_token": refresh_token}
+    welcome = f"Welcome {user['name'] if user['name'] else "Learner"}"
+    return {"message": welcome}
 
 
 @login_router.post("/refresh")
