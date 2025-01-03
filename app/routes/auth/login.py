@@ -171,8 +171,7 @@ async def login_user(
         secure=True,
         samesite="lax",
     )
-    welcome = f"Welcome {user['name'] if user['name'] else "Learner"}"
-    return {"message": welcome}
+    return "Login successful"
 
 
 @login_router.post("/refresh")
