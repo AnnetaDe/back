@@ -42,7 +42,7 @@ class TestPerformance(BaseModel):
 
 
 class Performance(BaseModel):
-    id: Optional[str] = Field(alias="_id")
+    board_id: Optional[str] = Field(alias="board_id")
     user_id: str
     tests: list[TestPerformance]
     total_score: int
@@ -54,7 +54,7 @@ class Performance(BaseModel):
     @classmethod
     def create_performance(cls, user_id: str, performance_id: str):
         return cls(
-            _id=performance_id,
+            board_id=performance_id,
             user_id=user_id,
             tests=[],
             total_score=0,
@@ -69,7 +69,7 @@ class Performance(BaseModel):
         populate_by_alias = True
         json_schema_extra = {
             "example": {
-                "_id": "123",
+                "board_id": "123",
                 "user_id": "123",
                 "tests": [
                     {
