@@ -1,3 +1,6 @@
+import hashlib
+from uuid import uuid4
+from faker import Faker
 from pydantic import BaseModel, Field, EmailStr, field_validator, validator
 from typing import Literal, Optional, Dict
 from pymongo.database import Database
@@ -13,6 +16,7 @@ class Question(BaseModel):
     answer: Literal["1", "2", "3", "4"]
     level: int
     hash: Optional[str] = Field(alias="hash", default=None)
+    is_hidden: bool = Field(default=True, exclude=True)
 
     @classmethod
     def create_question(cls, dict_data, hashed) -> "Question":
