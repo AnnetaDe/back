@@ -31,6 +31,7 @@ class TestResponse(BaseModel):
     subject: str
     test_data: list[dict]
     completed: bool
+    count: int
     date: str
 
 
@@ -106,7 +107,7 @@ async def generate(
         "test_id": _id,
         "status": "success",
         "message": "Test created",
-        "question_count": len(hidden_answers),
+        "count": len(hidden_answers),
         "subject": data.subject,
         "level": data.level,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
