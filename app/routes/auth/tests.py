@@ -28,6 +28,7 @@ class TestResponse(BaseModel):
     message: str
     status: str
     level: int
+    count: int
     subject: str
     test_data: list[dict]
     completed: bool
@@ -61,7 +62,10 @@ class CurrentUser(BaseModel):
 fake = Faker()
 
 
-@test_router.post("/test", response_model=TestResponse)
+@test_router.post(
+    "/test",
+    response_model=TestResponse,
+)
 async def generate(
     data: TestRequest,
     current_user: CurrentUser = Depends(get_current_user),
@@ -77,7 +81,7 @@ async def generate(
         number_of_questions=data.number_of_questions,
         level=data.level,
         db=db,
-    )
+    )  # type: ignore
 
     if not questions:
         raise HTTPException(status_code=400, detail="Error generating test")
@@ -124,7 +128,6 @@ async def submit_answers(
     """
     Submit answers for a test and evaluate correctness.
     """
-
     user_id = current_user.id
     performance_board_id = current_user.performance
     history_id = current_user.history
@@ -132,13 +135,6 @@ async def submit_answers(
         {"id": performance_board_id}
     )
     print(performance_board)
-    # if performance_board is None:
-    #     performance_board = Performance.create_performance(
-    #         performance_id=performance_board_id, user_id=user_id
-    #     )
-    #     print(performance_board.model_dump())
-
-    #     await db["performance_board"].insert_one(performance_board.model_dump())
 
     test_id = test_data.test_id
     selected_answers = test_data.selected_answers
