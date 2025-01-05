@@ -171,7 +171,7 @@ async def login_user(
         secure=True,
         samesite="lax",
     )
-    return "Login successful"
+    return f"Login successful for {user['email']}"
 
 
 @login_router.post("/refresh")

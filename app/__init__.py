@@ -39,5 +39,5 @@ def start():
 
 app.include_router(login_router, prefix="/auth", tags=["Auth"])
 app.include_router(
-    test_router, prefix="", tags=["Test"], dependencies=[Depends(get_current_user)]
+    test_router, prefix="/test", tags=["Test"], dependencies=[Depends(get_current_user)]
 )

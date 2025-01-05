@@ -62,7 +62,7 @@ class CurrentUser(BaseModel):
 fake = Faker()
 
 
-@test_router.post("/test", response_model=TestResponse)
+@test_router.post("/generate", response_model=TestResponse)
 async def generate(
     data: TestRequest,
     current_user: CurrentUser = Depends(get_current_user),
@@ -216,7 +216,7 @@ async def submit_answers(
     }
 
 
-@test_router.get("/my-tests", response_model=CompletedResponse)
+@test_router.get("/history", response_model=CompletedResponse)
 async def get_user_history(
     current_user: CurrentUser = Depends(get_current_user), db=Depends(get_database)
 ):
