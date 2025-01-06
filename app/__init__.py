@@ -44,8 +44,7 @@ app.add_middleware(
 
 @app.get("/")
 def start():
-
-    return {"message": "Hello StudApp"}
+    return {"message": "Explore the services"}
 
 
 app.include_router(login_router, prefix="/auth", tags=["Auth"])
