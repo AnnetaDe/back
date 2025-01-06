@@ -23,6 +23,7 @@ async def get_current_user(
 ):
 
     try:
+
         payload = decode_token(encrypted_token)
         current_user_id = payload.get("sub")
         if not current_user_id:
@@ -33,7 +34,6 @@ async def get_current_user(
             )
         current_user = await get_user_by_id(current_user_id, db)
         current_user = User(**current_user)
-        print(current_user)
 
         return current_user
     except PyJWTError as e:
@@ -229,4 +229,5 @@ async def logout(response: Response):
 
 @login_router.get("/profile")
 async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)):
+
     return current_user

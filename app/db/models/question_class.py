@@ -22,7 +22,6 @@ class Question(BaseModel):
     def create_question(cls, dict_data, hashed) -> "Question":
         """
         Parse the JSON response from GPT into a Question instance.
-
         :param json_data: The JSON response from GPT.
         :return: A Question instance.
 

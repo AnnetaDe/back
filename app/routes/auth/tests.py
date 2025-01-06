@@ -132,14 +132,6 @@ async def submit_answers(
     performance_board = await db["performance_board"].find_one(
         {"id": performance_board_id}
     )
-    print(performance_board)
-    # if performance_board is None:
-    #     performance_board = Performance.create_performance(
-    #         performance_id=performance_board_id, user_id=user_id
-    #     )
-    #     print(performance_board.model_dump())
-
-    #     await db["performance_board"].insert_one(performance_board.model_dump())
 
     test_id = test_data.test_id
     selected_answers = test_data.selected_answers
