@@ -21,11 +21,9 @@ async def get_database(request: Request):
 async def get_current_user(
     encrypted_token=Depends(oauth2_scheme), db=Depends(get_database)
 ):
-
     try:
-
         payload = decode_token(encrypted_token)
-        current_user_id = payload.get("sub")
+        current_user_id: str = payload.get("sub")
         if not current_user_id:
             raise HTTPException(
                 status_code=401,
@@ -149,7 +147,7 @@ async def login_user(
 
     acc_token = create_token(
         data={"sub": user["_id"], "email": user["email"]},
-        expire_time=30,
+        expire_time=120,
     )
     refresh_token = create_token(
         data={"sub": user["_id"], "email": user["email"], "refresh": True},
@@ -158,7 +156,7 @@ async def login_user(
 
     response.set_cookie(
         key="access_token",
-        value=f"Bearer {acc_token}",
+        value=acc_token,
         httponly=True,
         secure=True,
         samesite="lax",
@@ -171,6 +169,8 @@ async def login_user(
         secure=True,
         samesite="lax",
     )
+    print(response.__dict__)
+
     return f"Login successful for {user['email']}"
 
 
