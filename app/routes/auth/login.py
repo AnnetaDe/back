@@ -159,7 +159,7 @@ async def login_user(
         value=acc_token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
     )
 
     response.set_cookie(
@@ -167,7 +167,7 @@ async def login_user(
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
     )
     print(response.__dict__)
 
