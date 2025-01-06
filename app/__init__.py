@@ -6,6 +6,7 @@ from app.db.database import close_database, start_database
 from dotenv import load_dotenv
 from app.routes.auth.login import get_current_user, login_router
 from app.routes.auth.tests import test_router
+from app.routes.other.public import public_router
 
 
 load_dotenv()
@@ -49,3 +50,4 @@ app.include_router(login_router, prefix="/auth", tags=["Auth"])
 app.include_router(
     test_router, prefix="/test", tags=["Test"], dependencies=[Depends(get_current_user)]
 )
+app.include_router(public_router, prefix="/public", tags=["Public"])

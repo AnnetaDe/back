@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
@@ -170,7 +171,7 @@ async def login_user(
         samesite="none",
     )
 
-    return user
+    return {"access_token": acc_token, "refresh_token": refresh_token}
 
 
 @login_router.post("/refresh")
