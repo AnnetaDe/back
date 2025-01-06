@@ -169,9 +169,8 @@ async def login_user(
         secure=True,
         samesite="none",
     )
-    print(response.__dict__)
 
-    return f"Login successful for {user['email']}"
+    return user
 
 
 @login_router.post("/refresh")
@@ -228,6 +227,9 @@ async def logout(response: Response):
 
 
 @login_router.get("/profile")
-async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)):
+async def get_user_profile(
+    Request,
+    current_user: CurrentUser = Depends(get_current_user),
+):
 
     return current_user
