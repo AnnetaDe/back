@@ -66,12 +66,12 @@ fake = Faker()
 async def generate(
     data: TestRequest,
     db=Depends(get_database),
-    current_user: CurrentUser = Depends(get_current_user),
+    # current_user: CurrentUser = Depends(get_current_user),
 ):
     """Generate a test."""
     print(data)
 
-    user_id = current_user.id
+    # user_id = current_user.id
     _id = str(fake.uuid4())
 
     questions = await generate_test(
@@ -95,7 +95,7 @@ async def generate(
     await db["history"].insert_one(
         {
             "_id": _id,
-            "user_id": user_id,
+            # "user_id": user_id,
             "subject": data.subject,
             "level": data.level,
             "test_data": hidden_answers,

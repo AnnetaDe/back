@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
-from fastapi.responses import JSONResponse
+
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
@@ -13,7 +13,7 @@ from app.helpers.get_cookies import get_cookies
 from app.helpers.tokens import create_token, decode_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 async def get_database(request: Request):
