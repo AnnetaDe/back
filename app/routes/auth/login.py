@@ -158,11 +158,8 @@ async def login_user(
     refresh_token = create_token(
         data={"sub": user["_id"], "email": user["email"], "refresh": True},
     )
-    print(refresh_token)
-    print(acc_token)
+
     decoded = decode_token(acc_token)
-    print(decoded)
-    print(decoded["exp"])
 
     await update_refresh_token(user["_id"], refresh_token, db)
 

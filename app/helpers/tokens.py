@@ -36,3 +36,5 @@ def decode_token(token: str):
         return payload
     except jwt.ExpiredSignatureError:
         raise jwt.ExpiredSignatureError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise jwt.InvalidTokenError("Invalid token")
