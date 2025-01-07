@@ -209,7 +209,7 @@ def save_to_user_history():
     pass
 
 
-@test_router.get("/history", response_model=CompletedResponse)
+@test_router.get("/history")
 async def get_user_history(user_id, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
@@ -219,7 +219,7 @@ async def get_user_history(user_id, db=Depends(get_database)):
     return {"history": history}
 
 
-@test_router.get("/performance", response_model=CompletedResponse)
+@test_router.get("/performance")
 async def get_user_performance(performance_id, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
