@@ -181,7 +181,7 @@ async def submit_answers(
         )
 
         await db["performance_board"].update_one(
-            {"id": performance_board_id},
+            {"board_id": performance_board_id},
             {
                 "$push": {"tests": current_test_summary.model_dump()},
                 "$inc": {
@@ -222,6 +222,7 @@ async def get_user_performance(user_id: str, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
-    performance = await db["performance_board"].find_one({"id": user_id})
+    performance = await db["performance_board"].find_one({"user_id": user_id})
+    print(performance)
 
     return {"performance": performance}
