@@ -172,6 +172,7 @@ async def login_user(
         httponly=True,
         secure=True,
         samesite="none",
+        expires=decoded["exp"],
     )
 
     response.set_cookie(
@@ -180,6 +181,7 @@ async def login_user(
         httponly=True,
         secure=True,
         samesite="none",
+        expires=decoded["exp"],
     )
 
     return {"access_token": acc_token, "refresh_token": refresh_token, "user": user}
