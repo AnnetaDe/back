@@ -21,13 +21,17 @@ async def get_database(request: Request):
 
 
 async def get_current_user(
-    encrypted_token=Depends(get_cookies), db=Depends(get_database)
+    encrypted_token=Depends(get_cookies),
+    db=Depends(get_database),
 ):
     print(encrypted_token["access_token"])
 
     try:
         payload = decode_token(encrypted_token["access_token"])
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
         print(payload)
+
         current_user_id: str = payload.get("sub")
         print(current_user_id)
         if not current_user_id:
