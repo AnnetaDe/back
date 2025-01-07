@@ -27,6 +27,7 @@ async def get_current_user(
 
     try:
         payload = decode_token(encrypted_token["access_token"])
+        print(payload)
         current_user_id: str = payload.get("sub")
         print(current_user_id)
         if not current_user_id:
@@ -34,7 +35,6 @@ async def get_current_user(
             raise HTTPException(
                 status_code=401,
                 detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
             )
         current_user = await get_user_by_id(current_user_id, db)
         current_user = User(**current_user)
