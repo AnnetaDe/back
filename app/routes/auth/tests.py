@@ -19,7 +19,7 @@ async def get_database(request: Request):
 
 class TestRequest(BaseModel):
     subject: str
-    number_of_questions: int
+    count: int
     level: int
 
 
@@ -76,7 +76,7 @@ async def generate(
 
     questions = await generate_test(
         subject=data.subject,
-        number_of_questions=data.number_of_questions,
+        number_of_questions=data.count,
         level=data.level,
         db=db,
     )
