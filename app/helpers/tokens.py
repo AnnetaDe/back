@@ -17,7 +17,7 @@ else:
     ALGORITHM = str(ALGORITHM)
 
 
-def create_token(data: dict, expire_time: Optional[int] = 120):
+def create_token(data: dict, expire_time: Optional[int] = 1200):
     to_encode = data.copy()
     expire = datetime.now() + timedelta(minutes=expire_time or 30)
     to_encode.update({"exp": expire})
