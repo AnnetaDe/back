@@ -42,7 +42,6 @@ class TestSubmission(BaseModel):
 
 class Scores(BaseModel):
     status: dict
-    message: str
 
 
 class CompletedResponse(BaseModel):
@@ -201,7 +200,7 @@ async def submit_answers(
             "test": test_id,
             "correct": is_correct,
             "incorrect": total_num_questions - is_correct,
-            "score_%": is_correct / total_num_questions * 100,
+            "score": is_correct / total_num_questions * 100,
             "completed": True,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         },
