@@ -210,7 +210,7 @@ def save_to_user_history():
 
 
 @test_router.get("/history")
-async def get_user_history(user_id, db=Depends(get_database)):
+async def get_user_history(user_id: str, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
@@ -220,10 +220,10 @@ async def get_user_history(user_id, db=Depends(get_database)):
 
 
 @test_router.get("/performance")
-async def get_user_performance(performance_id, db=Depends(get_database)):
+async def get_user_performance(user_id: str, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
-    performance = await db["performance_board"].find_one({"id": performance_id})
+    performance = await db["performance_board"].find_one({"id": user_id})
 
     return {"performance": performance}
