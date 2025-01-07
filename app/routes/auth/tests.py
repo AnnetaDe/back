@@ -11,6 +11,7 @@ from app.db.models.performance import Performance, TestPerformance
 from app.routes.auth.login import get_current_user, get_user_by_id
 
 test_router = APIRouter()
+fake = Faker()
 
 
 async def get_database(request: Request):
@@ -58,7 +59,8 @@ class CurrentUser(BaseModel):
     history: str
 
 
-fake = Faker()
+class GetPerformance(BaseModel):
+    user_id: str
 
 
 @test_router.post("/generate", response_model=TestResponse)
@@ -203,10 +205,6 @@ async def submit_answers(
         },
         "message": "amazing",
     }
-
-
-def save_to_user_history():
-    pass
 
 
 @test_router.get("/history")
