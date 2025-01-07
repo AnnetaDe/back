@@ -8,7 +8,7 @@ from typing import Optional
 from app.db.make_test import generate_test
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
-from app.routes.auth.login import get_current_user
+from app.routes.auth.login import get_current_user, get_user_by_id
 
 test_router = APIRouter()
 
@@ -169,12 +169,9 @@ async def submit_answers(
     )
 
     if user_id is not None:
-        current_user = await get_current_user(user_id, db)
+        current_user = await get_user_by_id(user_id, db)
         performance_board_id = current_user.performance
         history_id = current_user.history
-        performance_board = await db["performance_board"].find_one(
-            {"id": performance_board_id}
-        )
 
         await db["history"].update_one(
             {"_id": test_id},
@@ -213,14 +210,20 @@ def save_to_user_history():
 
 
 @test_router.get("/history", response_model=CompletedResponse)
-async def get_user_history(
-    current_user: CurrentUser = Depends(get_current_user), db=Depends(get_database)
-):
+async def get_user_history(user_id, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
-    user_id = current_user.id
-
     history = await db["history"].find({"user_id": user_id}).to_list(length=100)
 
     return {"history": history}
+
+
+@test_router.get("/performance", response_model=CompletedResponse)
+async def get_user_performance(user_id, db=Depends(get_database)):
+    """
+    Retrieve the test generation history for the authenticated user.
+    """
+    performance = await db["performance_board"].find_one({"id": user_id})
+
+    return {"performance": performance}
