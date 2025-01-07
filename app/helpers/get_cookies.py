@@ -7,6 +7,8 @@ def get_cookies(
     if not access_token or not refresh_token:
         raise HTTPException(status_code=401, detail="Missing tokens in cookies")
 
+    print("Cookies:im here")
+
     print(f"Access Token: {access_token}")
     print(f"Refresh Token: {refresh_token}")
 

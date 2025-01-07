@@ -30,6 +30,7 @@ async def get_current_user(
         current_user_id: str = payload.get("sub")
         print(current_user_id)
         if not current_user_id:
+            print("No user id or i cant decode")
             raise HTTPException(
                 status_code=401,
                 detail="Invalid token",
@@ -41,9 +42,7 @@ async def get_current_user(
 
         return current_user
     except PyJWTError as e:
-        raise HTTPException(
-            status_code=401, detail="Something went wrong with the token"
-        )
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 class UserLoginRequest(BaseModel):
