@@ -220,10 +220,10 @@ async def get_user_history(user_id, db=Depends(get_database)):
 
 
 @test_router.get("/performance", response_model=CompletedResponse)
-async def get_user_performance(user_id, db=Depends(get_database)):
+async def get_user_performance(performance_id, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
-    performance = await db["performance_board"].find_one({"id": user_id})
+    performance = await db["performance_board"].find_one({"id": performance_id})
 
     return {"performance": performance}
