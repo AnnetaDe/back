@@ -6,7 +6,6 @@ from typing import Optional
 
 
 from app.db.make_test import generate_test
-from app.helpers.get_cookies import extract_tokens
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
 from app.routes.auth.login import get_current_user
@@ -34,7 +33,6 @@ class TestResponse(BaseModel):
     completed: bool
     count: int
     date: str
-    tokens: dict
 
 
 class TestSubmission(BaseModel):
@@ -64,9 +62,7 @@ class CurrentUser(BaseModel):
 fake = Faker()
 
 
-@test_router.post(
-    "/generate", response_model=TestResponse, dependencies=[Depends(extract_tokens)]
-)
+@test_router.post("/generate", response_model=TestResponse)
 async def generate(
     data: TestRequest,
     current_user: CurrentUser = Depends(get_current_user),
