@@ -120,19 +120,13 @@ async def generate(
 @test_router.post("/submit-answers", response_model=Scores)
 async def submit_answers(
     test_data: TestSubmission,
-    current_user: CurrentUser = Depends(get_current_user),
+    # current_user: CurrentUser = Depends(get_current_user),
     db=Depends(get_database),
+    user_id: Optional[str] = None,
 ):
     """
     Submit answers for a test and evaluate correctness.
     """
-
-    user_id = current_user.id
-    performance_board_id = current_user.performance
-    history_id = current_user.history
-    performance_board = await db["performance_board"].find_one(
-        {"id": performance_board_id}
-    )
 
     test_id = test_data.test_id
     selected_answers = test_data.selected_answers
@@ -177,24 +171,32 @@ async def submit_answers(
         completed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
-    await db["history"].update_one(
-        {"_id": test_id},
-        {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
-    )
+    if user_id is not None:
+        current_user = await get_current_user(user_id, db)
+        performance_board_id = current_user.performance
+        history_id = current_user.history
+        performance_board = await db["performance_board"].find_one(
+            {"id": performance_board_id}
+        )
 
-    await db["performance_board"].update_one(
-        {"id": performance_board_id},
-        {
-            "$push": {"tests": current_test_summary.model_dump()},
-            "$inc": {
-                "total_tests": 1,
-                "total_score": int(is_correct / total_num_questions * 100),
-                "total_questions": total_num_questions,
-                f"total_by_subj.{current_subject}": 1,
-                f"total_by_level.{current_level}": 1,
+        await db["history"].update_one(
+            {"_id": test_id},
+            {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
+        )
+
+        await db["performance_board"].update_one(
+            {"id": performance_board_id},
+            {
+                "$push": {"tests": current_test_summary.model_dump()},
+                "$inc": {
+                    "total_tests": 1,
+                    "total_score": int(is_correct / total_num_questions * 100),
+                    "total_questions": total_num_questions,
+                    f"total_by_subj.{current_subject}": 1,
+                    f"total_by_level.{current_level}": 1,
+                },
             },
-        },
-    )
+        )
 
     return {
         "status": {
@@ -207,6 +209,10 @@ async def submit_answers(
         },
         "message": "amazing",
     }
+
+
+def save_to_user_history():
+    pass
 
 
 @test_router.get("/history", response_model=CompletedResponse)
