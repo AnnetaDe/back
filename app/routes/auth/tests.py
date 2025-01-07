@@ -65,10 +65,11 @@ fake = Faker()
 @test_router.post("/generate", response_model=TestResponse)
 async def generate(
     data: TestRequest,
-    current_user: CurrentUser = Depends(get_current_user),
     db=Depends(get_database),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Generate a test."""
+    print(data)
 
     user_id = current_user.id
     _id = str(fake.uuid4())

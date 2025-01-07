@@ -9,10 +9,11 @@ from jwt import PyJWTError
 
 from app.db.models.performance import Performance
 from app.db.models.user import User
+from app.helpers.get_cookies import get_cookies
 from app.helpers.tokens import create_token, decode_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 async def get_database(request: Request):
@@ -20,11 +21,14 @@ async def get_database(request: Request):
 
 
 async def get_current_user(
-    encrypted_token=Depends(oauth2_scheme), db=Depends(get_database)
+    encrypted_token=Depends(get_cookies), db=Depends(get_database)
 ):
+    print(encrypted_token["access_token"])
+
     try:
-        payload = decode_token(encrypted_token)
+        payload = decode_token(encrypted_token["access_token"])
         current_user_id: str = payload.get("sub")
+        print(current_user_id)
         if not current_user_id:
             raise HTTPException(
                 status_code=401,
@@ -33,6 +37,7 @@ async def get_current_user(
             )
         current_user = await get_user_by_id(current_user_id, db)
         current_user = User(**current_user)
+        print(current_user)
 
         return current_user
     except PyJWTError as e:
@@ -145,7 +150,6 @@ async def login_user(
     user = await verify_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
     acc_token = create_token(
         data={"sub": user["_id"], "email": user["email"]},
         expire_time=120,
@@ -154,6 +158,8 @@ async def login_user(
         data={"sub": user["_id"], "email": user["email"], "refresh": True},
         expire_time=1200,
     )
+
+    await update_refresh_token(user["_id"], refresh_token, db)
 
     response.set_cookie(
         key="access_token",
@@ -171,7 +177,7 @@ async def login_user(
         samesite="none",
     )
 
-    return {"access_token": acc_token, "refresh_token": refresh_token}
+    return {"access_token": acc_token, "refresh_token": refresh_token, "user": user}
 
 
 @login_router.post("/refresh")
@@ -229,7 +235,6 @@ async def logout(response: Response):
 
 @login_router.get("/profile")
 async def get_user_profile(
-    Request,
     current_user: CurrentUser = Depends(get_current_user),
 ):
 
