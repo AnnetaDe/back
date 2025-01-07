@@ -32,10 +32,8 @@ async def get_current_user(
         print(current_user_id)
         if not current_user_id:
             print("No user id or i cant decode")
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token",
-            )
+            raise HTTPException(status_code=401, detail="Invalid token")
+
         current_user = await get_user_by_id(current_user_id, db)
         current_user = User(**current_user)
         print(current_user)
