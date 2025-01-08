@@ -221,8 +221,11 @@ async def get_user_history(user_id: str, db=Depends(get_database)):
 async def get_user_performance(user_id: str, db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
+
     """
-    performance = await db["performance_board"].find_one({"user_id": user_id})
+    user = await get_user_by_id(user_id, db)
+    board_id = user.performance
+    performance = await db["performance_board"].find_one({"board_id": board_id})
     print(performance)
 
     return {"performance": performance}
