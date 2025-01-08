@@ -126,7 +126,6 @@ async def submit_answers(
     """
     Submit answers for a test and evaluate correctness.
     """
-    user_id = test_data.user_id
 
     test_id = test_data.test_id
     selected_answers = test_data.selected_answers
@@ -181,12 +180,13 @@ async def submit_answers(
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
         board_id = user["performance"]
-        print(board_id)
+        hisoty_id = user["history"]
+        print(board_id, hisoty_id)
 
-        # await db["history"].update_one(
-        #     {"_id": test_id},
-        #     {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
-        # )
+        await db["history"].update_one(
+            {"_id": test_id},
+            {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
+        )
 
         await db["performance_board"].update_one(
             {"board_id": board_id},
