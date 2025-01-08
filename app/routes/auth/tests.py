@@ -230,7 +230,7 @@ async def get_user_performance(user_id: str = Query(...), db=Depends(get_databas
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    board_id = user.performance
+    board_id = user["performance"]
     performance = await db["performance_board"].find_one({"board_id": board_id})
     if performance is None:
         raise HTTPException(status_code=404, detail="Performance board not found")
