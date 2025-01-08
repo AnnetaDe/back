@@ -35,6 +35,8 @@ origins = [
     "http://192.168.1.73:3000",
     "http://192.168.1.73:3000/generate",
     "http://192.168.1.73:3000/submit-answer",
+    "http://192.168.1.73:3000/submit-test",
+    "http://192.168.1.73:3000/auth/login",
 ]
 app.add_middleware(
     CORSMiddleware,
