@@ -39,6 +39,7 @@ class TestResponse(BaseModel):
 class TestSubmission(BaseModel):
     test_id: str
     selected_answers: list[int]
+    user_id: Optional[str] = None
 
 
 class Scores(BaseModel):
@@ -121,11 +122,11 @@ async def submit_answers(
     test_data: TestSubmission,
     # current_user: CurrentUser = Depends(get_current_user),
     db=Depends(get_database),
-    user_id: Optional[str] = None,
 ):
     """
     Submit answers for a test and evaluate correctness.
     """
+    user_id = test_data.user_id
 
     test_id = test_data.test_id
     selected_answers = test_data.selected_answers
@@ -170,18 +171,25 @@ async def submit_answers(
         completed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
-    if user_id is not None:
-        current_user = await get_user_by_id(user_id, db)
-        performance_board_id = current_user.performance
-        history_id = current_user.history
+    if test_data.user_id is not None:
+        user_id = test_data.user_id
+        print(user_id)
+        if user_id is None:
+            raise HTTPException(status_code=400, detail="User ID is required")
 
-        await db["history"].update_one(
-            {"_id": test_id},
-            {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
-        )
+        user = await get_user_by_id(user_id, db)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        board_id = user["performance"]
+        print(board_id)
+
+        # await db["history"].update_one(
+        #     {"_id": test_id},
+        #     {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
+        # )
 
         await db["performance_board"].update_one(
-            {"board_id": performance_board_id},
+            {"board_id": board_id},
             {
                 "$push": {"tests": current_test_summary.model_dump()},
                 "$inc": {
