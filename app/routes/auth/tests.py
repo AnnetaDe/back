@@ -1,6 +1,6 @@
 from datetime import datetime
 from faker import Faker
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import Optional
 
@@ -208,7 +208,7 @@ async def submit_answers(
 
 
 @test_router.get("/history")
-async def get_user_history(user_id: str, db=Depends(get_database)):
+async def get_user_history(user_id: str = Query(...), db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
@@ -218,14 +218,22 @@ async def get_user_history(user_id: str, db=Depends(get_database)):
 
 
 @test_router.get("/performance")
-async def get_user_performance(user_id: str, db=Depends(get_database)):
+async def get_user_performance(user_id: str = Query(...), db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
 
     """
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+
     user = await get_user_by_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     board_id = user.performance
     performance = await db["performance_board"].find_one({"board_id": board_id})
+    if performance is None:
+        raise HTTPException(status_code=404, detail="Performance board not found")
     print(performance)
 
-    return {"performance": performance}
+    return {"user_id": user_id, "performance": performance}
