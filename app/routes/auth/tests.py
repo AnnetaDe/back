@@ -169,8 +169,20 @@ async def submit_answers(
         score=int(is_correct / total_num_questions * 100),
         completed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
+    if not test_data.user_id:
+        return {
+            "status": {
+                "test": test_id,
+                "correct": is_correct,
+                "incorrect": total_num_questions - is_correct,
+                "score": is_correct / total_num_questions * 100,
+                "completed": True,
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            "message": "amazing",
+        }
 
-    if test_data.user_id is not None:
+    else:
         user_id = test_data.user_id
         print(user_id)
         if user_id is None:
