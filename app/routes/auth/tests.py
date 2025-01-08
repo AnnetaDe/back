@@ -235,5 +235,7 @@ async def get_user_performance(user_id: str = Query(...), db=Depends(get_databas
     if performance is None:
         raise HTTPException(status_code=404, detail="Performance board not found")
     print(performance)
+    if "_id" in performance:
+        performance["_id"] = str(performance["_id"])
 
     return {"user_id": user_id, "performance": performance}
