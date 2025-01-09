@@ -6,6 +6,7 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm,
+    OAuth2AuthorizationCodeBearer,
 )
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
@@ -147,31 +148,41 @@ async def create_user(data: UserRegister, db=Depends(get_database)):
     return "User created successfully"
 
 
+Oauth2token = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=True)
+
+
 @login_router.post("/login")
 async def login_user(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends(Oauth2token)],
     response: Response,
     db=Depends(get_database),
 ):
-    user = await verify_user(form_data.username, form_data.password, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    acc_token = create_token(
-        data={"sub": user["_id"], "email": user["email"]},
-        expire_time=120,
-    )
-    refresh_token = create_token(
-        data={"sub": user["_id"], "email": user["email"], "refresh": True},
-    )
+    acc_token = "test"
+    refresh_token = "test"
+    if acc_token is "test":
+        user = "im a user"
+    if refresh_token is "test":
+        user = "im a user fresh"
 
-    decoded = decode_token(acc_token)
+    # user = await verify_user(form_data.username, form_data.password, db)
+    # if not user:
+    #     raise HTTPException(status_code=401, detail="Invalid email or password")
+    # acc_token = create_token(
+    #     data={"sub": user["_id"], "email": user["email"]},
+    #     expire_time=120,
+    # )
+    # refresh_token = create_token(
+    #     data={"sub": user["_id"], "email": user["email"], "refresh": True},
+    # )
 
-    await update_refresh_token(user["_id"], refresh_token, db)
+    # decoded = decode_token(acc_token)
 
-    headers = {
-        "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
-        "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
-    }
+    # await update_refresh_token(user["_id"], refresh_token, db)
+
+    # headers = {
+    #     "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
+    #     "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
+    # }
 
     response.set_cookie(
         key="access_token",
@@ -179,7 +190,6 @@ async def login_user(
         httponly=True,
         secure=True,
         samesite="none",
-        expires=decoded["exp"],
     )
 
     response.set_cookie(
@@ -188,10 +198,10 @@ async def login_user(
         httponly=True,
         secure=True,
         samesite="none",
-        expires=decoded["exp"],
     )
 
-    return {"access_token": acc_token, "refresh_token": refresh_token, "user": user}
+    # return {"access_token": acc_token, "refresh_token": refresh_token, "user": user}
+    return {"fresh": "fresh"}
 
 
 @login_router.post("/refresh")
