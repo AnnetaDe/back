@@ -159,9 +159,9 @@ async def login_user(
 ):
     acc_token = "test"
     refresh_token = "test"
-    if acc_token is "test":
+    if acc_token == "test":
         user = "im a user"
-    if refresh_token is "test":
+    if refresh_token == "test":
         user = "im a user fresh"
 
     # user = await verify_user(form_data.username, form_data.password, db)
