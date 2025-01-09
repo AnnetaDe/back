@@ -10,7 +10,7 @@ from jwt import PyJWTError
 from app.db.models.performance import Performance
 from app.db.models.user import User
 from app.helpers.get_cookies import get_cookies
-from app.helpers.tokens import create_token, decode_token
+from app.helpers.tokens import create_token, decode_token, get_profile
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -163,6 +163,11 @@ async def login_user(
 
     await update_refresh_token(user["_id"], refresh_token, db)
 
+    headers = {
+        "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
+        "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
+    }
+
     response.set_cookie(
         key="access_token",
         value=acc_token,
@@ -239,7 +244,7 @@ async def logout(response: Response):
 
 @login_router.get("/profile")
 async def get_user_profile(
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_profile),
 ):
 
-    return current_user
+    return {"profile": current_user}
