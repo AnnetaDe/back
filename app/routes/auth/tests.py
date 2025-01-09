@@ -117,7 +117,7 @@ async def generate(
     }
 
 
-@test_router.post("/submit-answers", response_model=Scores)
+@test_router.post("/submit", response_model=Scores)
 async def submit_answers(
     test_data: TestSubmission,
     # current_user: CurrentUser = Depends(get_current_user),
