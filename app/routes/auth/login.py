@@ -1,7 +1,12 @@
 from typing import Annotated
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request, status
 
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import security
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+)
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
 import jwt
@@ -10,7 +15,7 @@ from jwt import PyJWTError
 from app.db.models.performance import Performance
 from app.db.models.user import User
 from app.helpers.get_cookies import get_cookies
-from app.helpers.tokens import create_token, decode_token, get_profile
+from app.helpers.tokens import create_token, decode_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -240,6 +245,30 @@ async def logout(response: Response):
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully"}
+
+
+def get_profile(
+    credentials: HTTPAuthorizationCredentials = Depends(security.HTTPBearer()),
+    db=Depends(get_database),
+):
+    token = credentials.credentials
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = decode_token(token)
+        user_id: str = payload.get("sub")
+        user = get_user_by_id(user_id, db)
+        if user is None:
+            raise credentials_exception
+    except jwt.ExpiredSignatureError:
+        raise credentials_exception
+    except jwt.InvalidTokenError:
+        raise credentials_exception
+    return user
 
 
 @login_router.get("/profile")

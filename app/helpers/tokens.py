@@ -10,7 +10,6 @@ from fastapi import status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 
-from app.routes.auth.login import get_database, get_user_by_id
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if SECRET_KEY is None:
@@ -48,22 +47,22 @@ def decode_token(token: str):
 security = HTTPBearer()
 
 
-def get_profile(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
+# def get_profile(credentials: HTTPAuthorizationCredentials = Depends(security), db=Depends(get_database)):
+#     token = credentials.credentials
 
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = decode_token(token)
-        user_id: str = payload.get("sub")
-        user = get_user_by_id(user_id, db=Depends(get_database))
-        if user is None:
-            raise credentials_exception
-    except jwt.ExpiredSignatureError:
-        raise credentials_exception
-    except jwt.InvalidTokenError:
-        raise credentials_exception
-    return user
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+#     try:
+#         payload = decode_token(token)
+#         user_id: str = payload.get("sub")
+#         user = get_user_by_id(user_id, db)
+#         if user is None:
+#             raise credentials_exception
+#     except jwt.ExpiredSignatureError:
+#         raise credentials_exception
+#     except jwt.InvalidTokenError:
+#         raise credentials_exception
+#     return user
