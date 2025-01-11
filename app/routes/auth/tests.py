@@ -148,6 +148,7 @@ async def submit_answers(
         selected_answers = selected_answers[: len(test_to_evaluate["test_data"])]
     is_correct = 0
     total_num_questions = len(test_to_evaluate["test_data"])
+    all_questions = test_to_evaluate["test_data"]
 
     for question, selected_answer in zip(
         test_to_evaluate["test_data"], selected_answers
@@ -197,7 +198,13 @@ async def submit_answers(
 
         await db["history"].update_one(
             {"_id": test_id},
-            {"$set": {"completed": True, "test_data": test_to_evaluate["test_data"]}},
+            {
+                "$set": {
+                    "user_id": user_id,
+                    "completed": True,
+                    "test_data": test_to_evaluate["test_data"],
+                }
+            },
         )
 
         await db["performance_board"].update_one(
