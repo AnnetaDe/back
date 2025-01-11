@@ -239,9 +239,23 @@ async def get_user_history(user_id: str = Query(...), db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
     """
-    history = await db["history"].find({"user_id": user_id}).to_list(length=100)
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    user = await get_user_by_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not authenticated")
 
+    history = await db["history"].find({"user_id": user_id}).to_list(length=100)
     return {"history": history}
+
+
+@test_router.get("/onetest")
+async def get_one_test(test_id: str = Query(...), db=Depends(get_database)):
+    """
+    Retrieve the test from history for the authenticated user.
+    """
+    one_test = await db["history"].find_one({"_id": test_id})
+    return {"history": one_test}
 
 
 @test_router.get("/performance")
