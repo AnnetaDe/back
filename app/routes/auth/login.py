@@ -191,7 +191,7 @@ async def login_user(
         expires=decoded["exp"],
     )
 
-    return {"access_token": acc_token, "refresh_token": refresh_token, "user": user}
+    return {"user": user}
 
 
 @login_router.post("/refresh")

@@ -132,6 +132,7 @@ async def submit_answers(
     if not selected_answers:
         raise HTTPException(status_code=400, detail="No answers submitted")
     test_to_evaluate = await db["history"].find_one({"_id": test_id})
+
     if test_to_evaluate is None:
         raise HTTPException(status_code=404, detail="Test not found")
     current_subject = test_to_evaluate["subject"]
@@ -148,7 +149,6 @@ async def submit_answers(
         selected_answers = selected_answers[: len(test_to_evaluate["test_data"])]
     is_correct = 0
     total_num_questions = len(test_to_evaluate["test_data"])
-    all_questions = test_to_evaluate["test_data"]
 
     for question, selected_answer in zip(
         test_to_evaluate["test_data"], selected_answers
@@ -185,7 +185,7 @@ async def submit_answers(
 
     else:
         user_id = test_data.user_id
-        print(user_id)
+
         if user_id is None:
             raise HTTPException(status_code=400, detail="User ID is required")
 
@@ -194,7 +194,6 @@ async def submit_answers(
             raise HTTPException(status_code=404, detail="User not found")
         board_id = user["performance"]
         hisoty_id = user["history"]
-        print(board_id, hisoty_id)
 
         await db["history"].update_one(
             {"_id": test_id},
@@ -275,7 +274,7 @@ async def get_user_performance(user_id: str = Query(...), db=Depends(get_databas
     performance = await db["performance_board"].find_one({"board_id": board_id})
     if performance is None:
         raise HTTPException(status_code=404, detail="Performance board not found")
-    print(performance)
+
     if "_id" in performance:
         performance["_id"] = str(performance["_id"])
 
