@@ -177,8 +177,8 @@ async def login_user(
 
     response.headers.update(
         {
-            "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};Max-Age=1800",
-            "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};Max-Age=3600",
+            "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};",
+            "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};",
         }
     )
 
