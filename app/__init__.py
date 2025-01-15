@@ -12,9 +12,6 @@ from app.routes.other.public import public_router
 load_dotenv()
 
 
-app = FastAPI()
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
@@ -31,6 +28,7 @@ async def lifespan(app: FastAPI):
 
 
 origins = ["http://192.168.1.73:3000", "https://studapp-steel.vercel.app"]
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -38,8 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
