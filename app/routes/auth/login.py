@@ -11,10 +11,11 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
 import jwt
 from jwt import PyJWTError
+import datetime
 
 from app.db.models.performance import Performance
 from app.db.models.user import User
-from app.helpers.get_cookies import get_cookies
+
 from app.helpers.tokens import create_token, decode_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -25,31 +26,31 @@ async def get_database(request: Request):
     return request.app.state.db
 
 
-async def get_current_user(
-    encrypted_token=Depends(get_cookies),
-    db=Depends(get_database),
-):
-    print(encrypted_token["access_token"])
+# async def get_current_user(
+#     encrypted_token=Depends(get_cookies),
+#     db=Depends(get_database),
+# ):
+#     print(encrypted_token["access_token"])
 
-    try:
-        payload = decode_token(encrypted_token["access_token"])
-        if not payload:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        print(payload)
+#     try:
+#         payload = decode_token(encrypted_token["access_token"])
+#         if not payload:
+#             raise HTTPException(status_code=401, detail="Invalid token")
+#         print(payload)
 
-        current_user_id: str = payload.get("sub")
-        print(current_user_id)
-        if not current_user_id:
-            print("No user id or i cant decode")
-            raise HTTPException(status_code=401, detail="Invalid token")
+#         current_user_id: str = payload.get("sub")
+#         print(current_user_id)
+#         if not current_user_id:
+#             print("No user id or i cant decode")
+#             raise HTTPException(status_code=401, detail="Invalid token")
 
-        current_user = await get_user_by_id(current_user_id, db)
-        current_user = User(**current_user)
-        print(current_user)
+#         current_user = await get_user_by_id(current_user_id, db)
+#         current_user = User(**current_user)
+#         print(current_user)
 
-        return current_user
-    except PyJWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
+#         return current_user
+#     except PyJWTError as e:
+#         raise HTTPException(status_code=401, detail="Invalid token")
 
 
 class UserLoginRequest(BaseModel):
@@ -156,40 +157,49 @@ async def login_user(
     user = await verify_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    acc_token = create_token(
-        data={"sub": user["_id"], "email": user["email"]},
-        expire_time=120,
-    )
+    acc_token = create_token(data={"sub": user["_id"], "email": user["email"]})
     refresh_token = create_token(
         data={"sub": user["_id"], "email": user["email"], "refresh": True},
     )
 
-    decoded = decode_token(acc_token)
+    decoded_a = decode_token(acc_token)
+    decoded_r = decode_token(refresh_token)
+
+    exp_a = datetime.datetime.fromtimestamp(decoded_a["exp"]).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    exp_r = datetime.datetime.fromtimestamp(decoded_r["exp"]).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     await update_refresh_token(user["_id"], refresh_token, db)
-
-    headers = {
-        "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
-        "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={decoded['exp']}",
-    }
-
-    response.set_cookie(
-        key="access_token",
-        value=acc_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        expires=decoded["exp"],
+    response.headers["Authorization"] = f"Bearer {acc_token}"
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers.update(
+        {
+            "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};Max-Age=1800",
+            "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};Max-Age=3600",
+        }
     )
 
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        expires=decoded["exp"],
-    )
+    # response.set_cookie(
+    #     key="access_token",
+    #     value=acc_token,
+    #     httponly=True,
+    #     secure=True,
+    #     samesite="none",
+    #     expires=exp_a,
+    # )
+
+    # response.set_cookie(
+    #     key="refresh_token",
+    #     value=refresh_token,
+    #     httponly=True,
+    #     secure=True,
+    #     samesite="none",
+    #     expires=exp_r,
+    # )
 
     return {"user": user}
 
@@ -223,15 +233,15 @@ async def refresh_token(
             key="access_token",
             value=new_acc_token,
             httponly=True,
-            secure=True,
-            samesite="lax",
+            secure=False,
+            samesite="none",
         )
         response.set_cookie(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=True,
-            samesite="lax",
+            secure=False,
+            samesite="none",
         )
         return "Token refreshed successfully"
     except jwt.ExpiredSignatureError:
@@ -245,35 +255,3 @@ async def logout(response: Response):
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully"}
-
-
-def get_profile(
-    credentials: HTTPAuthorizationCredentials = Depends(security.HTTPBearer()),
-    db=Depends(get_database),
-):
-    token = credentials.credentials
-
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = decode_token(token)
-        user_id: str = payload.get("sub")
-        user = get_user_by_id(user_id, db)
-        if user is None:
-            raise credentials_exception
-    except jwt.ExpiredSignatureError:
-        raise credentials_exception
-    except jwt.InvalidTokenError:
-        raise credentials_exception
-    return user
-
-
-@login_router.get("/profile")
-async def get_user_profile(
-    current_user: CurrentUser = Depends(get_profile),
-):
-
-    return {"profile": current_user}

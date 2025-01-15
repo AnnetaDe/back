@@ -8,7 +8,7 @@ from typing import Optional
 from app.db.make_test import generate_test
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
-from app.routes.auth.login import get_current_user, get_user_by_id
+from app.routes.auth.login import get_user_by_id
 
 test_router = APIRouter()
 fake = Faker()

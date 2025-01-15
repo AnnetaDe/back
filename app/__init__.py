@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import close_database, start_database
 from dotenv import load_dotenv
-from app.routes.auth.login import get_current_user, login_router
+from app.routes.auth.login import login_router
 from app.routes.auth.tests import test_router
 from app.routes.other.public import public_router
 
@@ -30,17 +30,18 @@ async def lifespan(app: FastAPI):
             print("Closed MongoDB connection")
 
 
-app = FastAPI(lifespan=lifespan)
 origins = [
     "http://192.168.1.73:3000",
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
