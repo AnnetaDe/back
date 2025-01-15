@@ -174,8 +174,7 @@ async def login_user(
 
     await update_refresh_token(user["_id"], refresh_token, db)
     response.headers["Authorization"] = f"Bearer {acc_token}"
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
+
     response.headers.update(
         {
             "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};Max-Age=1800",
