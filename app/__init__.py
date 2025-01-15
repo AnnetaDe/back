@@ -30,9 +30,7 @@ async def lifespan(app: FastAPI):
             print("Closed MongoDB connection")
 
 
-origins = [
-    "http://192.168.1.73:3000",
-]
+origins = ["http://192.168.1.73:3000", "https://studapp-steel.vercel.app"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
