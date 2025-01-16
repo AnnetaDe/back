@@ -2,6 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request, status
 
 from fastapi import security
+from fastapi.responses import JSONResponse
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     OAuth2PasswordBearer,
@@ -150,7 +151,6 @@ async def create_user(data: UserRegister, db=Depends(get_database)):
 @login_router.post("/login", response_model=UserLoginResponse)
 async def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    response: Response,
     db=Depends(get_database),
 ):
     user = await verify_user(form_data.username, form_data.password, db)
@@ -172,32 +172,33 @@ async def login_user(
     )
 
     await update_refresh_token(user["_id"], refresh_token, db)
+    response = JSONResponse(content={"user": user})
     response.headers["Authorization"] = f"Bearer {acc_token}"
 
-    # response.headers.update(
-    #     {
-    #         "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};",
-    #         "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};",
-    #     }
+    response.headers.update(
+        {
+            "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a}; Partials=True; Max-Age=120",
+            "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r}; Partials=True; Max-Age=1200",
+        }
+    )
+
+    # response.set_cookie(
+    #     key="access_token",
+    #     value=acc_token,
+    #     httponly=True,
+    #     secure=True,
+    #     samesite="none",
+    #     expires=exp_a,
     # )
 
-    response.set_cookie(
-        key="access_token",
-        value=acc_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        expires=exp_a,
-    )
-
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        expires=exp_r,
-    )
+    # response.set_cookie(
+    #     key="refresh_token",
+    #     value=refresh_token,
+    #     httponly=True,
+    #     secure=True,
+    #     samesite="none",
+    #     expires=exp_r,
+    # )
 
     return {"user": user}
 
