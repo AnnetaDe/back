@@ -26,31 +26,30 @@ async def get_database(request: Request):
     return request.app.state.db
 
 
-# async def get_current_user(
-#     encrypted_token=Depends(get_cookies),
-#     db=Depends(get_database),
-# ):
-#     print(encrypted_token["access_token"])
+async def get_current_user(
+    request: Request,
+    db=Depends(get_database),
+):
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Token missing")
 
-#     try:
-#         payload = decode_token(encrypted_token["access_token"])
-#         if not payload:
-#             raise HTTPException(status_code=401, detail="Invalid token")
-#         print(payload)
+    try:
+        payload = decode_token(access_token)
 
-#         current_user_id: str = payload.get("sub")
-#         print(current_user_id)
-#         if not current_user_id:
-#             print("No user id or i cant decode")
-#             raise HTTPException(status_code=401, detail="Invalid token")
+        current_user_id: str = payload.get("sub")
+        print(current_user_id)
+        if not current_user_id:
+            print("No user id or i cant decode")
+            raise HTTPException(status_code=401, detail="Invalid token")
 
-#         current_user = await get_user_by_id(current_user_id, db)
-#         current_user = User(**current_user)
-#         print(current_user)
+        current_user = await get_user_by_id(current_user_id, db)
+        current_user = User(**current_user)
+        print(current_user)
 
-#         return current_user
-#     except PyJWTError as e:
-#         raise HTTPException(status_code=401, detail="Invalid token")
+        return current_user
+    except PyJWTError as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 class UserLoginRequest(BaseModel):
@@ -261,6 +260,11 @@ async def refresh_token(
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+@login_router.get("/profile", response_model=ProfileResponse)
+async def get_profile(current_user: CurrentUser = Depends(get_current_user)):
+    return current_user
 
 
 @login_router.post("/logout")
