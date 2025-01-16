@@ -202,9 +202,18 @@ async def login_user(
     return {"user": user}
 
 
+async def get_refresh_token_cookie(request: Request):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+    return refresh_token
+
+
 @login_router.post("/refresh")
 async def refresh_token(
-    response: Response, refresh_token: str = Cookie(None), db=Depends(get_database)
+    response: Response,
+    refresh_token: str = Depends(get_refresh_token_cookie),
+    db=Depends(get_database),
 ):
 
     if not refresh_token:
@@ -216,6 +225,12 @@ async def refresh_token(
         if not payload:
             raise HTTPException(status_code=401, detail="Invalid token")
         user_id = payload["sub"]
+        user = await get_user_by_id(user_id, db)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        if not user["refresh_token"] == refresh_token:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
         new_refresh_token = create_token(
             data={"sub": payload["sub"], "email": payload["email"], "refresh": True},
             expire_time=1200,
