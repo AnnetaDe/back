@@ -29,13 +29,13 @@ async def lifespan(app: FastAPI):
 
 origins = ["http://192.168.1.73:3000", "https://studapp-steel.vercel.app"]
 app = FastAPI(lifespan=lifespan)
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
