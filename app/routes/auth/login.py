@@ -175,30 +175,30 @@ async def login_user(
     await update_refresh_token(user["_id"], refresh_token, db)
     response.headers["Authorization"] = f"Bearer {acc_token}"
 
-    response.headers.update(
-        {
-            "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};",
-            "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};",
-        }
+    # response.headers.update(
+    #     {
+    #         "Set-Cookie": f"access_token={acc_token}; HttpOnly; Secure; SameSite=None; Expires={exp_a};",
+    #         "Set-Cookie": f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=None; Expires={exp_r};",
+    #     }
+    # )
+
+    response.set_cookie(
+        key="access_token",
+        value=acc_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        expires=exp_a,
     )
 
-    # response.set_cookie(
-    #     key="access_token",
-    #     value=acc_token,
-    #     httponly=True,
-    #     secure=True,
-    #     samesite="none",
-    #     expires=exp_a,
-    # )
-
-    # response.set_cookie(
-    #     key="refresh_token",
-    #     value=refresh_token,
-    #     httponly=True,
-    #     secure=True,
-    #     samesite="none",
-    #     expires=exp_r,
-    # )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        expires=exp_r,
+    )
 
     return {"user": user}
 
