@@ -185,7 +185,7 @@ async def login_user(
         value=acc_token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
         expires=exp_a,
     )
 
@@ -194,7 +194,7 @@ async def login_user(
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
         expires=exp_r,
     )
 
