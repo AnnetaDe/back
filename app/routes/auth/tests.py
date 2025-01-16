@@ -8,7 +8,7 @@ from typing import Optional
 from app.db.make_test import generate_test
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
-from app.routes.auth.login import get_current_user, get_user_by_id
+from app.routes.auth.login import get_user_by_id
 
 test_router = APIRouter()
 fake = Faker()
@@ -258,14 +258,11 @@ async def get_one_test(test_id: str = Query(...), db=Depends(get_database)):
 
 
 @test_router.get("/performance")
-async def get_user_performance(
-    user_id: str = Query(...), db=Depends(get_database), user=Depends(get_current_user)
-):
+async def get_user_performance(user_id: str = Query(...), db=Depends(get_database)):
     """
     Retrieve the test generation history for the authenticated user.
 
     """
-
     if user_id is None:
         raise HTTPException(status_code=400, detail="User ID is required")
 
