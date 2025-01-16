@@ -59,8 +59,7 @@ class UserLoginRequest(BaseModel):
 
 
 class UserLoginResponse(BaseModel):
-    access_token: str
-    refresh_token: str
+    user: dict
 
 
 class ProfileResponse(BaseModel):
@@ -148,7 +147,7 @@ async def create_user(data: UserRegister, db=Depends(get_database)):
     return "User created successfully"
 
 
-@login_router.post("/login")
+@login_router.post("/login", response_model=UserLoginResponse)
 async def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
