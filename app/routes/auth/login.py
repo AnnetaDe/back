@@ -148,7 +148,7 @@ async def create_user(data: UserRegister, db=Depends(get_database)):
     return "User created successfully"
 
 
-@login_router.post("/login", response_model=UserLoginResponse)
+@login_router.post("/login")
 async def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db=Depends(get_database),
@@ -200,7 +200,7 @@ async def login_user(
     #     expires=exp_r,
     # )
 
-    return {"user": user}
+    return response
 
 
 @login_router.post("/refresh")
