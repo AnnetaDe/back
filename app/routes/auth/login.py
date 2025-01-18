@@ -155,7 +155,6 @@ async def login_user(
         samesite="lax",
         expires=exp_a,
         max_age=600,
-        path="/",
     )
 
     response.set_cookie(
@@ -166,7 +165,6 @@ async def login_user(
         samesite="lax",
         expires=exp_r,
         max_age=86400,
-        path="/",
     )
 
     return {"user": user}
