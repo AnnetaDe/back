@@ -161,7 +161,7 @@ async def login_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         expires=exp_r,
         max_age=86400,
