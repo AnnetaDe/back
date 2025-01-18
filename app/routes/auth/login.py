@@ -175,7 +175,6 @@ async def login_user(
 @login_router.get("/me", response_model=ProfileResponse)
 async def get_profile(
     current_user: Annotated[dict, Depends(get_user_from_cookies)],
-    # db=Depends(get_database),
 ):
     if current_user is None:
         raise HTTPException(
