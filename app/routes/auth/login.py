@@ -151,7 +151,7 @@ async def login_user(
         key="access_token",
         value=acc_token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         expires=exp_a,
         max_age=600,
