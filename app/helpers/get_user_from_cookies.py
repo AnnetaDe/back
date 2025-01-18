@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request, status
+from fastapi import Cookie, Depends, HTTPException, Response, Request, status
 
 from app.helpers.get_database import get_database
 from app.helpers.create_decode_tokens import create_token
@@ -11,11 +11,14 @@ async def get_user_from_cookies(
     """Retrieve user from access or refresh tokens in cookies if no access token found, try refresh token"""
 
     if not request.cookies:
+        print("No cookies found, redirect to login")
         raise HTTPException(
             status_code=401, detail="No cookies found, redirect to login"
         )
     access_token = request.cookies.get("access_token")
     refresh_token = request.cookies.get("refresh_token")
+    print("Access token found in cookies", access_token)
+    print("Refresh token found in cookies", refresh_token)
     if access_token:
         try:
             user = await validate_access_token(access_token, db)
