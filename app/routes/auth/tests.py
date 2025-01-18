@@ -6,9 +6,10 @@ from typing import Optional
 
 
 from app.db.make_test import generate_test
+from app.helpers.get_user_by_id import get_user_by_id
 from app.helpers.hide_answer import hide_answer, show_answer
 from app.db.models.performance import Performance, TestPerformance
-from app.routes.auth.login import get_user_by_id
+from app.helpers.get_user_from_cookies import get_user_from_cookies
 
 test_router = APIRouter()
 fake = Faker()
@@ -234,12 +235,15 @@ async def submit_answers(
 
 
 @test_router.get("/history")
-async def get_user_history(user_id: str = Query(...), db=Depends(get_database)):
+async def get_user_history(
+    current_user=Depends(get_user_from_cookies), db=Depends(get_database)
+):
     """
     Retrieve the test generation history for the authenticated user.
     """
+    user_id = current_user["_id"]
     if user_id is None:
-        raise HTTPException(status_code=400, detail="User ID is required")
+        raise HTTPException(status_code=400, detail="Cant get your id from cookies")
     user = await get_user_by_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="User not authenticated")
@@ -258,13 +262,16 @@ async def get_one_test(test_id: str = Query(...), db=Depends(get_database)):
 
 
 @test_router.get("/performance")
-async def get_user_performance(user_id: str = Query(...), db=Depends(get_database)):
+async def get_user_performance(
+    current_user=Depends(get_user_from_cookies), db=Depends(get_database)
+):
     """
     Retrieve the test generation history for the authenticated user.
 
     """
+    user_id = current_user["_id"]
     if user_id is None:
-        raise HTTPException(status_code=400, detail="User ID is required")
+        raise HTTPException(status_code=400, detail="Cant get your id from cookies")
 
     user = await get_user_by_id(user_id, db)
     if user is None:

@@ -1,55 +1,28 @@
 from typing import Annotated
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from fastapi import security
 from fastapi.security import (
-    HTTPAuthorizationCredentials,
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm,
 )
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, field_validator
-import jwt
+
 from jwt import PyJWTError
 import datetime
 
 from app.db.models.performance import Performance
 from app.db.models.user import User
 
-from app.helpers.tokens import create_token, decode_token
+from app.helpers.get_user_from_cookies import get_user_from_cookies
+from app.helpers.create_decode_tokens import create_token, decode_token
+from app.helpers.get_database import get_database
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
-
-
-async def get_database(request: Request):
-    return request.app.state.db
-
-
-async def get_current_user(
-    request: Request,
-    db=Depends(get_database),
-):
-    access_token = request.cookies.get("access_token")
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Token missing")
-
-    try:
-        payload = decode_token(access_token)
-
-        current_user_id: str = payload.get("sub")
-        print(current_user_id)
-        if not current_user_id:
-            print("No user id or i cant decode")
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        current_user = await get_user_by_id(current_user_id, db)
-        current_user = User(**current_user)
-        print(current_user)
-
-        return current_user
-    except PyJWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="auth/login", scopes={"me": "Read information about the current user."}
+)
 
 
 class UserLoginRequest(BaseModel):
@@ -62,8 +35,7 @@ class UserLoginResponse(BaseModel):
 
 
 class ProfileResponse(BaseModel):
-    user_id: str
-    email: str
+    user: dict
 
 
 class CurrentUser(BaseModel):
@@ -98,11 +70,6 @@ async def verify_user(email: str, password: str, db):
         return False
     if not pwd_context.verify(password, user["password"]):
         return False
-    return user
-
-
-async def get_user_by_id(user_id: str, db):
-    user = await db["users"].find_one({"_id": user_id})
     return user
 
 
@@ -171,7 +138,7 @@ async def login_user(
     )
 
     await update_refresh_token(user["_id"], refresh_token, db)
-    response.headers["Authorization"] = f"Bearer {acc_token}"
+    response.headers["WWW-authentificate"] = f"Bearer {acc_token}"
 
     # response.headers.update(
     #     {
@@ -184,87 +151,37 @@ async def login_user(
         key="access_token",
         value=acc_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=False,
+        samesite="lax",
         expires=exp_a,
+        max_age=600,
+        path="/",
     )
 
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=False,
+        samesite="lax",
         expires=exp_r,
+        max_age=86400,
+        path="/",
     )
 
     return {"user": user}
 
 
-async def get_refresh_token_cookie(request: Request):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="Refresh token missing")
-    return refresh_token
-
-
-@login_router.post("/refresh")
-async def refresh_token(
-    response: Response,
-    refresh_token: str = Depends(get_refresh_token_cookie),
-    db=Depends(get_database),
+@login_router.get("/me", response_model=ProfileResponse)
+async def get_profile(
+    current_user: Annotated[dict, Depends(get_user_from_cookies)],
+    # db=Depends(get_database),
 ):
-
-    if not refresh_token:
+    if current_user is None:
         raise HTTPException(
-            status_code=401, detail="Missing refresh token.Please login"
+            status_code=401, detail="user not authenticated or not found"
         )
-    try:
-        payload = decode_token(refresh_token)
-        if not payload:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        user_id = payload["sub"]
-        user = await get_user_by_id(user_id, db)
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        if not user["refresh_token"] == refresh_token:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        new_refresh_token = create_token(
-            data={"sub": payload["sub"], "email": payload["email"], "refresh": True},
-            expire_time=1200,
-        )
-        await update_refresh_token(user_id, new_refresh_token, db)
-
-        # Generate a new access token
-        new_acc_token = create_token(
-            data={"sub": payload["sub"], "email": payload["email"]}, expire_time=30
-        )
-
-        response.set_cookie(
-            key="access_token",
-            value=new_acc_token,
-            httponly=True,
-            secure=False,
-            samesite="none",
-        )
-        response.set_cookie(
-            key="refresh_token",
-            value=new_refresh_token,
-            httponly=True,
-            secure=False,
-            samesite="none",
-        )
-        return "Token refreshed successfully"
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@login_router.get("/profile", response_model=ProfileResponse)
-async def get_profile(current_user: CurrentUser = Depends(get_current_user)):
-    return current_user
+    return {"user": current_user}
 
 
 @login_router.post("/logout")

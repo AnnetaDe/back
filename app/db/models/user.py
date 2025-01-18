@@ -6,7 +6,7 @@ from enum import Enum
 import datetime
 from pymongo.database import Database
 from app.db.models.performance import Performance
-from app.helpers.hashed import hash_password, verify_password
+from app.helpers.hash_verify_password import hash_password, verify_password
 from app.helpers.uniq_id import unique_id
 
 
